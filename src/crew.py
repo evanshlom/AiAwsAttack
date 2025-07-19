@@ -1,0 +1,55 @@
+from crewai import Crew, Agent, Task, Process
+from crewai.project import CrewBase, agent, task, crew
+from langchain_aws import BedrockLLM
+
+@CrewBase
+class MarketingCrew:
+    """Content Marketing Crew"""
+    
+    agents_config = 'config/agents.yml'
+    tasks_config = 'config/tasks.yml'
+    
+    def __init__(self):
+        self.llm = BedrockLLM(model_id="amazon.titan-text-express-v1")
+    
+    @agent
+    def researcher(self) -> Agent:
+        return Agent(
+            config=self.agents_config['researcher'],
+            llm=self.llm
+        )
+    
+    @agent
+    def analyzer(self) -> Agent:
+        return Agent(
+            config=self.agents_config['analyzer'],
+            llm=self.llm
+        )
+    
+    @agent
+    def strategist(self) -> Agent:
+        return Agent(
+            config=self.agents_config['strategist'],
+            llm=self.llm
+        )
+    
+    @task
+    def research_task(self) -> Task:
+        return Task(config=self.tasks_config['research_task'])
+    
+    @task
+    def analysis_task(self) -> Task:
+        return Task(config=self.tasks_config['analysis_task'])
+    
+    @task
+    def strategy_task(self) -> Task:
+        return Task(config=self.tasks_config['strategy_task'])
+    
+    @crew
+    def crew(self) -> Crew:
+        return Crew(
+            agents=self.agents,
+            tasks=self.tasks,
+            process=Process.sequential,
+            verbose=True
+        )

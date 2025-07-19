@@ -1,0 +1,4 @@
+crewai[tools]
+langchain-aws
+python-dotenv
+boto3

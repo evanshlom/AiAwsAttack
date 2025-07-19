@@ -29,9 +29,12 @@ jobs:
       
       - name: Deploy Lambda
         run: |
+          aws s3 mb s3://aiawsattack-bucket || true
+          aws s3 cp deployment.zip s3://aiawsattack-bucket/marketing-crew/deployment.zip
           aws lambda update-function-code \
             --function-name content-strategy-crew \
-            --zip-file fileb://deployment.zip \
+            --s3-bucket aiawsattack-bucket \
+            --s3-key marketing-crew/deployment.zip \
             --publish
           
           echo "Deployed! Invoke with:"

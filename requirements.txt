@@ -1,4 +1,3 @@
-crewai[tools]
+crewai
 langchain-aws
-python-dotenv
 boto3

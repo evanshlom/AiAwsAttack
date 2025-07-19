@@ -1,5 +1,9 @@
 # AiAwsAttack
-ATTACK AI projects with FAST FLEXIBLE dev+deploy cicd pipeline.
+ATTACK AI Agent projects with FAST FLEXIBLE dev+deploy cicd pipeline.
+
+* Crew AI: Popular framework with 1 py file and 2 yml files for rapid config.
+* AWS Bedrock: Titan-Express LLM as a starting point for agent crew.
+* AWS Lambda: Quickly deploy a POC as one Lambda function and you can test it by invoking the Lambda function from AWS CLI or AWS Console. (For next steps: connect the Lambda function to an AWS API Gateway)
 
 ## Project Structure
 ```
@@ -21,20 +25,11 @@ content-crew/
 
 ## Quick Start
 
-### Local Development
-```bash
-# Clone and setup
-git clone <repo>
-cd content-crew
-pip install -r requirements.txt
-
-# Add AWS credentials
-cp .env.example .env
-# Edit .env with your credentials
-
-# Run locally
-python main.py
-```
+### CICD Secrets
+Add these to GitHub Actions Secrets before pushing the CICD pipe:
+* AWS_ACCESS_KEY_ID
+* AWS_SECRET_ACCESS_KEY
+* (The CICD yml file uses AWS Region us-east-1)
 
 ### Deploy to AWS Lambda
 ```bash
@@ -53,7 +48,7 @@ git commit -m "Deploy"
 git push origin main
 ```
 
-### Test Lambda
+### Test the Lambda Deployment
 ```bash
 # Default topic
 aws lambda invoke --function-name content-strategy-crew output.json
@@ -67,7 +62,7 @@ aws lambda invoke \
 cat output.json
 ```
 
-## Architecture
+## Agentic Workflow
 
 Three-agent workflow:
 1. **Researcher**: Finds similar creators across platforms

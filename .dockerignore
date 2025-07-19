@@ -1,0 +1,17 @@
+FROM public.ecr.aws/lambda/python:3.11
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+# Copy source code
+COPY src/ ./src/
+COPY lambda_handler.py .
+
+# Set HOME to /tmp to avoid read-only filesystem errors
+ENV HOME=/tmp
+
+# Set the CMD to your handler
+CMD ["lambda_handler.lambda_handler"]
+
+## This file excludes unnecessary files from the ECR container on AWS

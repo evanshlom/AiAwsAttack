@@ -9,10 +9,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-      
       - name: Configure AWS
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -20,22 +16,61 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
       
-      - name: Package Lambda
-        run: |
-          pip install -r requirements.txt -t ./package
-          cp -r src ./package/
-          cp lambda_handler.py ./package/
-          cd package && zip -r ../deployment.zip . -x "*.pyc" -x "__pycache__/*"
+      - name: Login to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v1
       
-      - name: Deploy Lambda
+      - name: Build and Deploy
         run: |
+          # Get account ID
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          
+          # Create ECR repository if it doesn't exist
+          aws ecr create-repository --repository-name marketing-crew || true
+          
+          # Build and push Docker image
+          docker build -t marketing-crew .
+          docker tag marketing-crew:latest $ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/marketing-crew:latest
+          docker push $ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/marketing-crew:latest
+          
+          # Create S3 bucket if it doesn't exist (for future use)
           aws s3 mb s3://aiawsattack-bucket || true
-          aws s3 cp deployment.zip s3://aiawsattack-bucket/marketing-crew/deployment.zip
-          aws lambda update-function-code \
+          
+          # Create IAM role if it doesn't exist
+          aws iam create-role \
+            --role-name lambda-execution-role \
+            --assume-role-policy-document '{
+              "Version": "2012-10-17",
+              "Statement": [{
+                "Effect": "Allow",
+                "Principal": {"Service": "lambda.amazonaws.com"},
+                "Action": "sts:AssumeRole"
+              }]
+            }' || true
+          
+          aws iam attach-role-policy \
+            --role-name lambda-execution-role \
+            --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole || true
+          
+          aws iam attach-role-policy \
+            --role-name lambda-execution-role \
+            --policy-arn arn:aws:iam::aws:policy/AmazonBedrockFullAccess || true
+          
+          # Wait for role to propagate
+          sleep 10
+          
+          # Create or update Lambda function
+          aws lambda create-function \
             --function-name content-strategy-crew \
-            --s3-bucket aiawsattack-bucket \
-            --s3-key marketing-crew/deployment.zip \
-            --publish
+            --package-type Image \
+            --code ImageUri=$ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/marketing-crew:latest \
+            --role arn:aws:iam::$ACCOUNT_ID:role/lambda-execution-role \
+            --timeout 900 \
+            --memory-size 3008 \
+            --environment Variables={HOME=/tmp} \
+            || aws lambda update-function-code \
+                --function-name content-strategy-crew \
+                --image-uri $ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/marketing-crew:latest
           
           echo "Deployed! Invoke with:"
           echo "aws lambda invoke --function-name content-strategy-crew output.json"

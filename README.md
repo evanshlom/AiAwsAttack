@@ -41,6 +41,7 @@ git push origin main
 ```
 
 ### Test the Lambda Deployment
+It takes 30-60 seconds for function to run and return 200 response after invoked. Then run cat output.json to see the full output.
 ```bash
 # Default topic
 aws lambda invoke --function-name content-strategy-crew output.json
@@ -48,7 +49,7 @@ aws lambda invoke --function-name content-strategy-crew output.json
 # Custom topic
 aws lambda invoke \
   --function-name content-strategy-crew \
-  --payload '{"topic": "Content for crypto VCs"}' \
+  --payload '{"topic": "Content for AWS AI ML and it's fun, interesting and not lame"}' \
   output.json
 
 cat output.json

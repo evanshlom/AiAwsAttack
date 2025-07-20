@@ -72,5 +72,9 @@ jobs:
                 --function-name content-strategy-crew \
                 --image-uri $ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/marketing-crew:latest
           
+          # Wait for Lambda to pull container image
+          echo "Waiting for Lambda container to be ready..."
+          sleep 60
+          
           echo "Deployed! Invoke with:"
           echo "aws lambda invoke --function-name content-strategy-crew output.json"

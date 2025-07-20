@@ -1,0 +1,3 @@
+cd test
+docker build -t test-lambda -f /c:/Users/me/Projects/sh3p4rd/AiAwsAttack/test/Dockerfile.test .
+docker run --rm test-lambda

@@ -1,4 +1,4 @@
-name: Deploy to AWS Lambda
+name: Deploy to AWS Fargate
 on:
   push:
     branches: [main]
@@ -36,45 +36,27 @@ jobs:
           # Create S3 bucket if it doesn't exist (for future use)
           aws s3 mb s3://aiawsattack-bucket || true
           
-          # Create IAM role if it doesn't exist
-          aws iam create-role \
-            --role-name lambda-execution-role \
-            --assume-role-policy-document '{
-              "Version": "2012-10-17",
-              "Statement": [{
-                "Effect": "Allow",
-                "Principal": {"Service": "lambda.amazonaws.com"},
-                "Action": "sts:AssumeRole"
-              }]
-            }' || true
+          # Create cluster and register task
+          aws ecs create-cluster --cluster-name crewai || true
           
-          aws iam attach-role-policy \
-            --role-name lambda-execution-role \
-            --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole || true
+          aws ecs register-task-definition \
+            --family content-crew \
+            --network-mode awsvpc \
+            --requires-compatibilities FARGATE \
+            --cpu "512" \
+            --memory "1024" \
+            --container-definitions '[{
+              "name": "crew",
+              "image": "'$ACCOUNT_ID'.dkr.ecr.us-east-1.amazonaws.com/marketing-crew:latest",
+              "essential": true
+            }]' \
+            --execution-role-arn arn:aws:iam::$ACCOUNT_ID:role/ecsTaskExecutionRole
           
-          aws iam attach-role-policy \
-            --role-name lambda-execution-role \
-            --policy-arn arn:aws:iam::aws:policy/AmazonBedrockFullAccess || true
+          # Run as one-off task (like Lambda invoke)
+          aws ecs run-task \
+            --cluster crewai \
+            --task-definition content-crew \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[$(aws ec2 describe-subnets --query 'Subnets[0].SubnetId' --output text)],assignPublicIp=ENABLED}"
           
-          # Wait for role to propagate
-          sleep 10
-          
-          # Create or update Lambda function
-          aws lambda create-function \
-            --function-name content-strategy-crew \
-            --package-type Image \
-            --code ImageUri=$ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/marketing-crew:latest \
-            --role arn:aws:iam::$ACCOUNT_ID:role/lambda-execution-role \
-            --timeout 900 \
-            --memory-size 3008 \
-            --environment Variables={HOME=/tmp} \
-            || aws lambda update-function-code \
-                --function-name content-strategy-crew \
-                --image-uri $ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/marketing-crew:latest
-          
-          # Wait for Lambda to pull container image
-          echo "Waiting for Lambda container to be ready..."
-          sleep 60
-          
-          echo "Deployed! Invoke with:"
-          echo "aws lambda invoke --function-name content-strategy-crew output.json"
+          echo "Deployed! Check ECS console for task status"

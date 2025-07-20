@@ -1,10 +1,11 @@
 FROM public.ecr.aws/lambda/python:3.11
 
-# Copy requirements first for better caching
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-# Copy source code
+# Install pysqlite3-binary to override system sqlite3 for lambda
+RUN pip install pysqlite3-binary
+
 COPY src/ ./src/
 COPY lambda_handler.py .
 

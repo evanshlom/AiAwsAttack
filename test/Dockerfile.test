@@ -1,3 +1,9 @@
-docker build -t test-lambda -f /c:/Users/me/Projects/sh3p4rd/AiAwsAttack/test/Dockerfile.test .
+FROM python:3.11-slim
 
-docker run --rm test-lambda
+WORKDIR /app
+
+COPY . /app
+
+RUN pip install --no-cache-dir boto3
+
+CMD ["python", "test_lambda.py"]

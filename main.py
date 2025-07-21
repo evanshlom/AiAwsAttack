@@ -1,8 +1,9 @@
 from src.crew import MarketingCrew # AI Agents for Content Marketing (Cross-Platform Market Entry Analysis)
+import os
 
 def run():
     inputs = {
-        'topic': 'I want to create content for VC investors in tech. Focus on AI startups, market analysis, and early-stage investing.'
+        'topic': os.environ.get('TOPIC', 'I want to create content for VC investors in tech. Focus on AI startups, market analysis, and early-stage investing.')
     }
     
     crew = MarketingCrew().crew()

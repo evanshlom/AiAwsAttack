@@ -1,13 +1,10 @@
-FROM public.ecr.aws/lambda/python:3.11
+FROM python:3.11-slim
 
+WORKDIR /app
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install pysqlite3-binary && pip install -r requirements.txt
 
 COPY src/ ./src/
-COPY lambda_handler.py .
+COPY main.py .
 
-# Set HOME to /tmp to avoid read-only filesystem errors
-ENV HOME=/tmp
-
-# Set the CMD to your handler
-CMD ["lambda_handler.lambda_handler"]
+CMD ["python", "main.py"]

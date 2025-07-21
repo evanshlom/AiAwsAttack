@@ -1,6 +1,6 @@
 import json
 import time
-from src.crew import ContentCrew
+from src.crew import MarketingCrew
 
 # Manual setup Sqlite3 to avoid weird error lambda fcn was defaulting to outdated version of sqlite3 (also added line to Dockerfile for this)
 import sys
@@ -21,7 +21,7 @@ def lambda_handler(event, context):
     }))
     
     try:
-        crew = ContentCrew().crew()
+        crew = MarketingCrew().crew()
         result = crew.kickoff(inputs={'topic': topic})
         
         # Log completion with metrics

@@ -36,9 +36,33 @@ jobs:
           # Create S3 bucket if it doesn't exist (for future use)
           aws s3 mb s3://aiawsattack-bucket || true
           
-          # Create cluster and register task
+          # Create cluster
           aws ecs create-cluster --cluster-name crewai || true
           
+          # Create task execution role if it doesn't exist
+          aws iam create-role \
+            --role-name ecsTaskExecutionRole \
+            --assume-role-policy-document '{
+              "Version": "2012-10-17",
+              "Statement": [{
+                "Effect": "Allow",
+                "Principal": {"Service": "ecs-tasks.amazonaws.com"},
+                "Action": "sts:AssumeRole"
+              }]
+            }' || true
+          
+          aws iam attach-role-policy \
+            --role-name ecsTaskExecutionRole \
+            --policy-arn arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy || true
+          
+          aws iam attach-role-policy \
+            --role-name ecsTaskExecutionRole \
+            --policy-arn arn:aws:iam::aws:policy/AmazonBedrockFullAccess || true
+          
+          # Wait for role to propagate
+          sleep 10
+          
+          # Register task definition
           aws ecs register-task-definition \
             --family content-crew \
             --network-mode awsvpc \

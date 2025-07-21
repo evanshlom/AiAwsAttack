@@ -22,26 +22,29 @@ jobs:
       
       - name: Build and Deploy
         run: |
+          # Load config from config.yml
+          eval $(sed 's/: /=/' .github/workflows/config.yml | grep -v '^#')
+          
           # Get account ID
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           
           # Create ECR repository if it doesn't exist
-          aws ecr create-repository --repository-name marketing-crew || true
+          aws ecr create-repository --repository-name $ecr_repo || true
           
           # Build and push Docker image
-          docker build -t marketing-crew .
-          docker tag marketing-crew:latest $ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/marketing-crew:latest
-          docker push $ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/marketing-crew:latest
+          docker build -t $ecr_repo .
+          docker tag $ecr_repo:latest $ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/$ecr_repo:latest
+          docker push $ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/$ecr_repo:latest
           
           # Create S3 bucket if it doesn't exist (for future use)
-          aws s3 mb s3://aiawsattack-bucket || true
+          aws s3 mb s3://$s3_bucket || true
           
           # Create cluster
-          aws ecs create-cluster --cluster-name crewai || true
+          aws ecs create-cluster --cluster-name $cluster_name || true
           
           # Create task execution role if it doesn't exist
           aws iam create-role \
-            --role-name ecsTaskExecutionRole \
+            --role-name $task_role \
             --assume-role-policy-document '{
               "Version": "2012-10-17",
               "Statement": [{
@@ -52,29 +55,53 @@ jobs:
             }' || true
           
           aws iam attach-role-policy \
-            --role-name ecsTaskExecutionRole \
+            --role-name $task_role \
             --policy-arn arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy || true
           
           aws iam attach-role-policy \
-            --role-name ecsTaskExecutionRole \
+            --role-name $task_role \
             --policy-arn arn:aws:iam::aws:policy/AmazonBedrockFullAccess || true
+          
+          # Create API Gateway role
+          aws iam create-role \
+            --role-name $api_role \
+            --assume-role-policy-document '{
+              "Version": "2012-10-17",
+              "Statement": [{
+                "Effect": "Allow",
+                "Principal": {"Service": "apigateway.amazonaws.com"},
+                "Action": "sts:AssumeRole"
+              }]
+            }' || true
+          
+          aws iam attach-role-policy \
+            --role-name $api_role \
+            --policy-arn arn:aws:iam::aws:policy/AmazonECSFullAccess || true
           
           # Wait for role to propagate
           sleep 10
           
           # Register task definition
           aws ecs register-task-definition \
-            --family content-crew \
-            --network-mode awsvpc \
-            --requires-compatibilities FARGATE \
-            --cpu "512" \
-            --memory "1024" \
+            --family $task_family \
+            --network-mode $network_mode \
+            --requires-compatibilities $launch_type \
+            --cpu "$cpu" \
+            --memory "$memory" \
             --container-definitions '[{
-              "name": "crew",
-              "image": "'$ACCOUNT_ID'.dkr.ecr.us-east-1.amazonaws.com/marketing-crew:latest",
-              "essential": true
+              "name": "'$container_name'",
+              "image": "'$ACCOUNT_ID'.dkr.ecr.us-east-1.amazonaws.com/'$ecr_repo':latest",
+              "essential": true,
+              "environment": [{
+                "name": "TOPIC",
+                "value": "default"
+              }]
             }]' \
-            --execution-role-arn arn:aws:iam::$ACCOUNT_ID:role/ecsTaskExecutionRole
+            --execution-role-arn arn:aws:iam::$ACCOUNT_ID:role/$task_role
           
-          echo "Deployed! Task definition registered. Run manually with:"
-          echo "aws ecs run-task --cluster crewai --task-definition content-crew --launch-type FARGATE --network-configuration \"awsvpcConfiguration={subnets=[SUBNET_ID],assignPublicIp=ENABLED}\""
+          echo "Deployed! Task definition ready."
+          echo "Set up API Gateway in console:"
+          echo "1. Create REST API"
+          echo "2. Create /run POST method" 
+          echo "3. Integration: AWS Service -> ECS -> RunTask"
+          echo "4. Use role: $api_role"

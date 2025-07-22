@@ -1,18 +1,40 @@
-from src.crew import MarketingCrew # AI Agents for Content Marketing (Cross-Platform Market Entry Analysis)
 import os
+import json
+import sys
+from src.crew import MarketingCrew
 
 def run():
-    inputs = {
-        'topic': os.environ.get('TOPIC', 'I want to create content for VC investors in tech. Focus on AI startups, market analysis, and early-stage investing.')
-    }
+    # Get input from environment variable (set by API Gateway mapping)
+    input_data = os.environ.get('INPUT_DATA', '{}')
+    
+    try:
+        data = json.loads(input_data)
+        topic = data.get('topic', 'I want to create content for VC investors in tech. Focus on AI startups, market analysis, and early-stage investing.')
+    except:
+        topic = 'I want to create content for VC investors in tech. Focus on AI startups, market analysis, and early-stage investing.'
+    
+    inputs = {'topic': topic}
     
     crew = MarketingCrew().crew()
-    result = crew.kickoff(inputs=inputs)
+    try:
+        result = crew.kickoff(inputs=inputs)
+    except Exception as e:
+        print(f"FULL ERROR: {type(e).__name__}: {str(e)}")
+        raise
     
-    print("\n" + "="*50)
-    print("CONTENT STRATEGY RESULTS")
-    print("="*50 + "\n")
-    print(result)
+    # Output as JSON for API Gateway
+    output = {
+        'statusCode': 200,
+        'body': json.dumps({
+            'result': str(result),
+            'topic': topic
+        })
+    }
+    
+    print(json.dumps(output))
+    
+    # Exit after completion so container stops
+    sys.exit(0)
 
 if __name__ == "__main__":
     run()

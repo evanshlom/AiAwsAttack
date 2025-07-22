@@ -1,6 +1,10 @@
 from crewai import Crew, Agent, Task, Process
 from crewai.project import CrewBase, agent, task, crew
 from langchain_aws import BedrockLLM
+import os
+
+# Enable verbose logging
+os.environ['LITELLM_LOG'] = 'DEBUG'
 
 @CrewBase
 class MarketingCrew:

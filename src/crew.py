@@ -1,6 +1,5 @@
-from crewai import Crew, Agent, Task, Process
+from crewai import Crew, Agent, Task, Process, LLM
 from crewai.project import CrewBase, agent, task, crew
-from langchain_aws import BedrockLLM
 import os
 
 # Enable verbose logging
@@ -14,10 +13,9 @@ class MarketingCrew:
     tasks_config = 'config/tasks.yml'
     
     def __init__(self):
-        import os
-        self.llm = BedrockLLM(
-            model_id="amazon.titan-text-express-v1",
-            region_name=os.environ.get('AWS_DEFAULT_REGION', 'us-east-1')
+        self.llm = LLM(
+            model="bedrock/amazon.titan-text-express-v1",
+            aws_region_name=os.environ.get('AWS_DEFAULT_REGION', 'us-east-1')
         )
     
     @agent

@@ -62,6 +62,10 @@ jobs:
             --role-name $task_role \
             --policy-arn arn:aws:iam::aws:policy/AmazonBedrockFullAccess || true
           
+          aws iam attach-role-policy \
+            --role-name $task_role \
+            --policy-arn arn:aws:iam::aws:policy/CloudWatchLogsFullAccess || true
+          
           # Create API Gateway role
           aws iam create-role \
             --role-name $api_role \

@@ -22,7 +22,7 @@ jobs:
       
       - name: Build and Deploy
         run: |
-          # Load config from config.yml
+          # Load config
           eval $(sed 's/: /=/' .github/workflows/config.yml | grep -v '^#')
           
           # Get account ID
@@ -78,6 +78,22 @@ jobs:
             --role-name $api_role \
             --policy-arn arn:aws:iam::aws:policy/AmazonECSFullAccess || true
           
+          # Create task role for Bedrock access
+          aws iam create-role \
+            --role-name ecsTaskRole \
+            --assume-role-policy-document '{
+              "Version": "2012-10-17",
+              "Statement": [{
+                "Effect": "Allow",
+                "Principal": {"Service": "ecs-tasks.amazonaws.com"},
+                "Action": "sts:AssumeRole"
+              }]
+            }' || true
+          
+          aws iam attach-role-policy \
+            --role-name ecsTaskRole \
+            --policy-arn arn:aws:iam::aws:policy/AmazonBedrockFullAccess || true
+          
           # Wait for role to propagate
           sleep 10
           
@@ -95,9 +111,22 @@ jobs:
               "environment": [{
                 "name": "TOPIC",
                 "value": "default"
-              }]
+              }, {
+                "name": "AWS_DEFAULT_REGION",
+                "value": "'$aws_region'"
+              }],
+              "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                  "awslogs-group": "/ecs/'$task_family'",
+                  "awslogs-region": "'$aws_region'",
+                  "awslogs-stream-prefix": "ecs",
+                  "awslogs-create-group": "true"
+                }
+              }
             }]' \
-            --execution-role-arn arn:aws:iam::$ACCOUNT_ID:role/$task_role
+            --execution-role-arn arn:aws:iam::$ACCOUNT_ID:role/$task_role \
+            --task-role-arn arn:aws:iam::$ACCOUNT_ID:role/ecsTaskRole
           
           echo "Deployed! Task definition ready."
           echo "Set up API Gateway in console:"

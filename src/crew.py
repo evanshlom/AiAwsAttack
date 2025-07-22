@@ -10,8 +10,12 @@ class MarketingCrew:
     tasks_config = 'config/tasks.yml'
     
     def __init__(self):
-        self.llm = BedrockLLM(model_id="amazon.titan-text-express-v1")
-    
+            import os
+            self.llm = BedrockLLM(
+                model_id="amazon.titan-text-express-v1",
+                region_name=os.environ.get('AWS_DEFAULT_REGION', 'us-east-1')
+            )
+
     @agent
     def researcher(self) -> Agent:
         return Agent(

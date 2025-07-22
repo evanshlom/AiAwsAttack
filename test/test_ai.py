@@ -89,8 +89,12 @@ def test_crew_deployment():
     log_group = '/ecs/content-crew'
     
     try:
-        # List available log streams
-        streams = logs.describe_log_streams(logGroupName=log_group)
+        # List available log streams for this specific task
+        task_id = task_arn.split('/')[-1]
+        streams = logs.describe_log_streams(
+            logGroupName=log_group,
+            logStreamNamePrefix=f"ecs/crew/{task_id}"
+        )
         if streams['logStreams']:
             log_stream = streams['logStreams'][0]['logStreamName']
             print(f"Found log stream: {log_stream}")

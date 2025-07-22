@@ -42,7 +42,7 @@ def test_crew_deployment():
     print("Starting CrewAI task...")
     response = ecs.run_task(
         cluster='crewai',
-        taskDefinition='content-crew',
+        taskDefinition='content-crew:LATEST',
         launchType='FARGATE',
         networkConfiguration={
             'awsvpcConfiguration': {

@@ -36,7 +36,7 @@ def test_crew_deployment():
     subnet_id = ec2.describe_subnets()['Subnets'][0]['SubnetId']
     
     # Get topic from env or use default
-    topic = os.getenv('CREW_TEST_TOPIC', 'AI startup investment trends and opportunities for VCs in 2025')
+    topic = os.getenv('CREW_TEST_TOPIC', 'I want to create rugpull reaction videos. Focus on crypto, poopcoins, and nfts.')
     
     # Run task
     print("Starting CrewAI task...")

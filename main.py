@@ -9,9 +9,9 @@ def run():
     
     try:
         data = json.loads(input_data)
-        topic = data.get('topic', 'I want to create content for VC investors in tech. Focus on AI startups, market analysis, and early-stage investing.')
+        topic = data.get('topic', 'I want to create rugpull reaction videos. Focus on crypto, poopcoins, and nfts.')
     except:
-        topic = 'I want to create content for VC investors in tech. Focus on AI startups, market analysis, and early-stage investing.'
+        topic = 'I want to create rugpull reaction videos. Focus on crypto, poopcoins, and nfts.'
     
     inputs = {'topic': topic}
     

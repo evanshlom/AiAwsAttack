@@ -11,7 +11,7 @@ def lambda_handler(event, context):
     start_time = time.time()
     
     # Get topic from event or use default
-    topic = event.get('topic', 'VC content for tech investors focusing on AI')
+    topic = event.get('topic', 'I want to create rugpull reaction videos. Focus on crypto, poopcoins, and nfts.')
     
     # Log structured data for CloudWatch
     print(json.dumps({

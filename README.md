@@ -49,7 +49,7 @@ aws lambda invoke --function-name content-strategy-crew output.json
 # Custom topic
 aws lambda invoke \
   --function-name content-strategy-crew \
-  --payload '{"topic": "Content for AWS AI ML and it's fun, interesting and not lame"}' \
+  --payload '{"topic": "'I want to create rugpull reaction videos. Focus on crypto, poopcoins, and nfts.'"}' \
   output.json
 
 cat output.json

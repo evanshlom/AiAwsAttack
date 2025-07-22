@@ -10,12 +10,12 @@ class MarketingCrew:
     tasks_config = 'config/tasks.yml'
     
     def __init__(self):
-            import os
-            self.llm = BedrockLLM(
-                model_id="amazon.titan-text-express-v1",
-                region_name=os.environ.get('AWS_DEFAULT_REGION', 'us-east-1')
-            )
-
+        import os
+        self.llm = BedrockLLM(
+            model_id="amazon.titan-text-express-v1",
+            region_name=os.environ.get('AWS_DEFAULT_REGION', 'us-east-1')
+        )
+    
     @agent
     def researcher(self) -> Agent:
         return Agent(
@@ -39,15 +39,24 @@ class MarketingCrew:
     
     @task
     def research_task(self) -> Task:
-        return Task(config=self.tasks_config['research_task'])
+        return Task(
+            config=self.tasks_config['research_task'],
+            agent=self.researcher()
+        )
     
     @task
     def analysis_task(self) -> Task:
-        return Task(config=self.tasks_config['analysis_task'])
+        return Task(
+            config=self.tasks_config['analysis_task'],
+            agent=self.analyzer()
+        )
     
     @task
     def strategy_task(self) -> Task:
-        return Task(config=self.tasks_config['strategy_task'])
+        return Task(
+            config=self.tasks_config['strategy_task'],
+            agent=self.strategist()
+        )
     
     @crew
     def crew(self) -> Crew:
